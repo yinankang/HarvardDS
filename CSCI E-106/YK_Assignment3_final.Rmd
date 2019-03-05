@@ -1,0 +1,181 @@
+---
+title: "Assignment3"
+author: "Yinan Kang"
+date: "2/16/2019"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+# 2.56 Calculation 
+```{r}
+data.X <- c(1,4,10,11,14)
+var <- 0.6^2
+sum.X <- 0
+for (i in 1:length(data.X)) {
+  sum.temp <- (data.X[i] - mean(data.X))^2
+  sum.X <- sum.X + sum.temp
+}
+
+exp.msr <- var + (3^2)*sum.X
+print(exp.msr)
+```
+Problem continued by hand. 
+
+
+# Problem 2.63
+```{r}
+cdi.df <- read.csv("/cloud/project/CDI.csv")
+for (i in unique(cdi.df$Geographic.Region)) {
+  data.temp <- dplyr::filter(cdi.df, cdi.df$Geographic.Region == i)
+  lm.temp <- lm(data.temp$Per.Capita.Income ~ data.temp$X.Bachelor.s.degrees)
+  assign(paste0("reg.lm.",i),lm.temp)
+}
+
+confint(reg.lm.1, level = 0.9)
+confint(reg.lm.2, level = 0.9)
+confint(reg.lm.3, level = 0.9)
+confint(reg.lm.4, level = 0.9)
+```
+The regression line slopes in different regions appear to have noticeable differences, with Region 2 having smaller slopes in the 90% confidence interval, Region 1 having higher slopes, and Regions 3 and 4's confidence intervals lie roughly in between. 
+
+So no, the regression lines in the different regions do not appear to have similar slopes. 
+
+# Problem 2.64
+```{r}
+senic <- read.table("/cloud/project/APC1.DAT", quote="\"", comment.char="")
+names(senic) <- c("ID", "length.of.stay", "age" , "infection.risk", "routine.culturing.ratio", "routine.chest.xray.ratio", "number.of.beds","medical.school.affiliation", "region","average.daily.census","number.of.nurses","available.facilities.services") 
+head(senic,3)
+
+# Problem 2.64 refers to Problem 1.43, which calls for Y = "Average length of stay in a hospital", 
+# and three separate predictors ("Infection Risk", "Available Facilities 
+# and Services", and "Routine Chest X-ray Ratio")
+
+lm.infection <- lm(senic$length.of.stay ~ senic$infection.risk)
+lm.facility <- lm(senic$length.of.stay ~ senic$available.facilities.services)
+lm.chest <- lm(senic$length.of.stay ~ senic$routine.chest.xray.ratio)
+
+summary(lm.infection)
+summary(lm.facility)
+summary(lm.chest)
+```
+Using R.sq as the criterion, "X = Infection Risk" accounts for the largest reduction in the variability of the average length of stay, as its "adjusted R.sq" = 0.2781 is highest among the three. 
+
+# Problem 2.66 
+
+```{r}
+rm(list=ls())
+
+predictors <- c(4,8,12,16,20)
+
+set.seed(39)
+errors <- rnorm(5,mean = 0, sd = 5) #set sd=5 as variance = 25
+
+outcomes <- predictors*4 +20 + errors
+
+cumul.df <- data.frame(predictors = predictors, errors = errors, outcomes = outcomes)
+
+attach(cumul.df)
+
+
+xbar <- mean(predictors)
+ybar <- mean(outcomes)
+
+b1 <- sum((predictors-xbar)*(outcomes-ybar))/(sum((predictors-xbar)^2))
+b0 <- ybar - b1*xbar
+y.hat <- b0 + b1*10
+
+model.b <- lm(outcomes~predictors)
+
+#'outcome.10' is the confidence interval for when Xh = 10 at 95% confidence (default)
+outcome.10 <- predict(model.b,newdata=data.frame(predictors=10),interval="confidence")
+
+```
+b1 = `r b1`  
+b0 = `r b0`  
+Confidence Interval at 95% = `r outcome.10[2:3]`  
+
+
+## 2.66 (b)
+
+``` {r, warning = F, message = F}
+# 'b1.vect' will store all calculated b1 values for part (c)
+# 'outcome.df' will store all confidence intervals for part (d)
+
+b1.vect <- c(rep(0,200))
+outcome.df <- data.frame(lower_bound = 0, upper_bound = 0) 
+seeds <- sample(1:1000,200) 
+
+predictors <- c(4,8,12,16,20)
+
+# Looping through 200 times: 
+
+for (j in 1:length(seeds)) {
+
+  set.seed(seeds[j])
+  errors <- rnorm(5,mean = 0, sd = 5) #set sd=5 as variance = 25
+
+  outcomes <- predictors*4 +20 + errors
+
+  cumul.df <- data.frame(predictors = predictors, errors = errors, outcomes = outcomes)
+
+
+  xbar <- mean(cumul.df$predictors)
+  ybar <- mean(cumul.df$outcomes)
+
+  b1 <- sum((cumul.df$predictors-xbar)*(cumul.df$outcomes-ybar))/(sum((cumul.df$predictors-xbar)^2))
+  b0 <- ybar - b1*xbar
+  y.hat <- b0 + b1*10
+
+  model.b <- lm(cumul.df$outcomes~cumul.df$predictors)
+  outcome.10 <- predict(model.b,newdata=data.frame("cumul.df$predictors"=10),interval="confidence")
+
+  outcome.df[j,1] <- outcome.10[2]
+  outcome.df[j,2] <- outcome.10[3]
+  b1.vect[j] <- b1
+
+
+}
+# Showing snippets of 'outcome.df' and 'b1.vect'
+head(outcome.df,3) 
+dim(outcome.df) 
+head(b1.vect,3)
+length(b1.vect) 
+
+
+```
+
+
+## 2.66 (c)
+```{r}
+hist(b1.vect, main = "Frequency Distribution of b1")
+b1.sd <- sd(b1.vect)
+b1.mean <- mean(b1.vect)
+
+```
+Standard Deviation of b1 = `r b1.sd`  
+Mean of b1 = `r b1.mean`  
+These results are consistent with theoretical expectations, as 'b1.mean' approximately equals 'b1' calculated in (a), as well as the 'beta1' value when using lm(). Similarly for 'b1.sd', the standard deviation of b1 approximates the theoretical standard deviation. 
+
+# 2.66 (d)
+```{r}
+
+bad = 0
+for (k in 1:nrow(outcome.df)) {
+  if (outcome.df[k,2] > 60 && outcome.df[k,1] > 60) {
+    bad = bad+1
+  }
+  if (outcome.df[k,2] < 60 && outcome.df[k,1] <60) {
+    bad = bad+1
+  }
+}
+print(bad)
+```
+There are `r print(bad)` cases where confidence interval of E(Yh) when Xh = 10 does not include E(Yh). 
+The proportion where E(Yh) IS included is `r ((200-bad)/200)*200`% 
+
+While given an infinitely large # of trials, the proportion should be 95%, the result after 200 trials is within reason. 

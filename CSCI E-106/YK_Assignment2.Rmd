@@ -1,0 +1,60 @@
+---
+title: "Assignment2"
+author: "Yinan Kang"
+date: "2/10/2019"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+# Problem 1.22
+## (a)
+```{r}
+batches.df <- data.frame(X = c(16,16,16,16,24,24,24,24,32,32,32,32,40,40,40,40), 
+                Y = c(199,205,196,200,218,220,215,223,237,234,235,230,250,248,253,246))
+head(batches.df,3)
+
+set.seed(258) 
+
+batches.lm <- lm(batches.df$Y ~ batches.df$X)
+batches.lm
+```
+The estimated linear regression function is Y = 2.034*X + 168.6.
+
+```{r}
+plot(batches.df)
+abline(168.6, 2.034)
+```
+
+Yes, the regression function looks like a good fit here as the values tend to be clustered near the line. 
+
+## (b)
+```{r}
+#Using X = 40:
+Y.40 <- 2.034*40 + 168.6 
+print(Y.40)
+```
+Point estimate at X = 40 is 249.96
+
+## (c)
+Point estimate of change in mean hardness when X increases by 1 is equal to the regression coefficient, 2.034 Brinell units 
+
+# Problem 2.16
+
+```{r}
+mean((batches.lm$residuals)^2)
+mean(batches.df$X)
+sum.xtot <- 0
+for (i in 1:nrow(batches.df)) {
+  sum.xind <- (batches.df[i,1] - mean(batches.df$X))^2
+  sum.xtot <- sum.xtot + sum.xind
+  
+}
+```
+MSE of linear regression in Problem 1.22 = 9.15  
+X-bar = 28 hr  
+sum((Xi - X-bar)^2) = 1280  
