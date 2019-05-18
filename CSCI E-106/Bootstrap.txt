@@ -1,0 +1,21 @@
+
+Use the methodology given page 459 in the text book...
+The function below uses this procedure....
+
+temp_df <- data.frame(matrix(ncol = 1, nrow = 0))
+
+for (i in 1:1000) {
+
+boots_data <- (sample(problem3_fit$residuals,12,replace=TRUE))
+
+boost_Yi <- problem3_fit$fitted.values + boots_data
+
+problem3c_fit <- lm(boost_Yi~mileage_data$xi+mileage_data$xi2)
+
+Xi_mean <- mean(mileage_data$Xi)
+
+prob3_c_ <- Xi_mean - ((.5*summary(problem3c_fit)$coefficients[2])/summary(problem3c_fit)$coefficients[
+
+temp_df <- rbind(temp_df, prob3_c_)
+
+}
