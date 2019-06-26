@@ -1,0 +1,108 @@
+library(lmtest)
+
+dwtest(Company.Sales~Industry.Sales,data=Blaisdell)
+
+	Durbin-Watson test
+
+data:  Company.Sales ~ Industry.Sales
+DW = 0.73473, p-value = 0.0001748
+alternative hypothesis: true autocorrelation is greater than 0
+
+ho: rho=0
+ha: rho>0    
+
+reject the null, error terms are positively correlated
+
+
+We need to estimate rho:
+
+######################################
+1-) Cocharane-Orcutt Procedure
+######################################
+library(Hmisc)
+f<-lm(Company.Sales~Industry.Sales,data=Blaisdell)
+et<-f$residuals
+et1<-Lag(et, shift = 1)
+
+d1<-sum(na.omit(et1)*et)
+d2<-sum(na.omit(et1)^2) 
+rho<-d1/d2
+
+Ytnew=Blaisdell$Company.Sales - rho*Lag(Blaisdell$Company.Sales, shift = 1)
+Xtnew=Blaisdell$Industry.Sales - rho*Lag(Blaisdell$Industry.Sales, shift = 1)
+
+f1<-lm(Ytnew~Xtnew)
+summary(f1)
+dwtest(Ytnew~Xtnew)
+
+
+> f1<-lm(Ytnew~Xtnew)
+> summary(f1)
+
+Call:
+lm(formula = Ytnew ~ Xtnew)
+
+Residuals:
+      Min        1Q    Median        3Q       Max 
+-0.097039 -0.056815  0.009902  0.034553  0.125048 
+
+Coefficients:
+             Estimate Std. Error t value Pr(>|t|)    
+(Intercept) -0.394111   0.167230  -2.357   0.0307 *  
+Xtnew        0.173758   0.002957  58.767   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 0.06715 on 17 degrees of freedom
+  (1 observation deleted due to missingness)
+Multiple R-squared:  0.9951,	Adjusted R-squared:  0.9948 
+F-statistic:  3454 on 1 and 17 DF,  p-value: < 2.2e-16
+
+> dwtest(Ytnew~Xtnew)
+
+	Durbin-Watson test
+
+data:  Ytnew ~ Xtnew
+DW = 1.6502, p-value = 0.1517
+alternative hypothesis: true autocorrelation is greater than 0
+
+######################################
+3-) first Difference
+######################################
+
+rho=1
+Ytnew=Blaisdell$Company.Sales - rho*Lag(Blaisdell$Company.Sales, shift = 1)
+Xtnew=Blaisdell$Industry.Sales - rho*Lag(Blaisdell$Industry.Sales, shift = 1)
+
+f1<-lm(Ytnew~Xtnew -1)
+summary(f1)
+dwtest(Ytnew~Xtnew-1)
+
+> f1<-lm(Ytnew~Xtnew -1)
+> summary(f1)
+
+Call:
+lm(formula = Ytnew ~ Xtnew - 1)
+
+Residuals:
+     Min       1Q   Median       3Q      Max 
+-0.08958 -0.03231  0.02412  0.05344  0.15139 
+
+Coefficients:
+      Estimate Std. Error t value Pr(>|t|)    
+Xtnew 0.168488   0.005096   33.06   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 0.06939 on 18 degrees of freedom
+  (1 observation deleted due to missingness)
+Multiple R-squared:  0.9838,	Adjusted R-squared:  0.9829 
+F-statistic:  1093 on 1 and 18 DF,  p-value: < 2.2e-16
+
+> dwtest(Ytnew~Xtnew-1)
+
+	Durbin-Watson test
+
+data:  Ytnew ~ Xtnew - 1
+DW = 1.7389, p-value = 0.3279
+alternative hypothesis: true autocorrelation is greater than 0

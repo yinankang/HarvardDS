@@ -1,0 +1,149 @@
+---
+title: "YK_Final_P2"
+author: "Yinan Kang"
+date: "5/13/2019"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+```{r warning=FALSE, message=FALSE}
+require(dplyr)
+require(leaps)
+require(neuralnet)
+require(readxl)
+require(caret)
+require(car)
+require(rpart)
+```
+
+# Problem 2  
+
+## Load Data
+```{r}
+rm(list=ls())
+df <- read.csv("/cloud/project/Question 2.csv")
+```
+
+## Split Data
+```{r}
+set.seed(12345)
+trainIndex <- createDataPartition(df$Y, p=0.7, list=FALSE)
+
+train.df <- df[trainIndex,]
+test.df <- df[-trainIndex,]
+```
+
+## Fit Model with Development sample (a.k.a. 'train.df')
+## (a)  
+```{r}
+model <- lm(Y~. , data=train.df)
+
+# Residual Analysis and Model Significance
+summary(model)
+plot(model)
+
+# Multicollinearity 
+vif(model)
+mean(vif(model))
+```
+
+
+**Analysis of (a)**: Upon seeing the overall summary model statistics, we find that overall, the model has a p-value = 6.101e-12, so overall the model IS statistically significant.  The adj-R2 = 0.5843, which (without knowing context of dataset) we can generally say is between OK and mediocre variance accountability.  
+
+We see from the residual plot and the QQ-Normality plot that: 
+* there is no severe normality issue (though a few noticeable observations - #43, #47)  
+* overall there is constant variance of the residuals   
+
+**Multicollinearity**: From the Variance Inflation Factor analysis, we find that there is relatively severe multicollinearity with the current model. Predictors X5 and X8 have VIF values >10, and overall the mean VIF = 11.93, which is >1 (benchmark).  
+
+
+
+## (b) Outliers and Influentials   
+```{r}
+summary(influence.measures(model))
+
+# For hat values: 2p/n
+p <- 10
+n <- nrow(train.df)
+
+h <- lm.influence(model)$hat
+plot(h)
+```
+
+**Influential Analysis**: We displayed the key influential determination statistics (Cook's Distance, DFFITS, Hat, etc.). We also plotted the Hat values for a visual comparison.  
+
+The approximate threshold to be considered a highly influential case for Hat values was '2p/n' = 0.25. Some observations crossed this threshold slightly, but only Case 112 truly did (noticeable from plot as well, where it's Hat=0.53). For DFFITS, the threshold is '1', but those that crossed this threshold did not show high leverage in the other metrics.  
+
+Thus, I would point to Case 112 as the only really influential case.   
+
+
+## (c) Can X5, X6, X7 be dropped? 
+
+### Note: I am assuming question is asking can X5, X6, X7 be dropped together from the model, as opposed to one-by-one  
+
+```{r}
+model.light <- lm(Y~X1+X2+X3+X4+X8+X9+X10, data=train.df)
+anova(model.light, model)
+```
+
+**Analysis**: If we go by the alpha = 0.05 level... NO, we can't drop X5,X6,X7 as p-value < 0.05, indicating statistical significance.   
+
+(But, if we were to utilize the alpha = 0.01 level, then the opposite conclusion would be valid.)  
+
+
+## (d) Regression Tree  
+```{r}
+model.reg <- rpart(Y~., data=train.df) 
+summary(model.reg)
+plot(model.reg)
+text(model.reg) 
+
+```
+
+## (d) and (e) Using holdout sample to score the model, and also to compare with regression tree model  
+
+```{r}
+model.pred <- predict(model,newdata=test.df)
+model.ei <- model.pred - test.df$Y
+
+tree.pred <- predict(model.reg, newdata=test.df)
+tree.ei <- tree.pred - test.df$Y
+
+# Using MAE as criteria
+mean(abs(model.ei))
+mean(abs(tree.ei))
+```
+
+
+**(d) second part**: We see that, using mean absolute error as the criteria, the linear model in (a) performed better than the regression tree model.  
+
+## Re-calibrate model and compare with model in (c)  
+### Confused by the wording... I am going to re-calibrate model from (a) with holdout data to detect stability, then fit holdout data with model in (c) and compare. 
+### [Main confusion... what is meant by 'final model' in (c)? We never decided (c) was 'final' model.]  
+
+```{r}
+model.end <- lm(Y~., data=test.df)
+summary(model.end) # Holdout 
+summary(model) # Original 
+```
+
+
+**Analysis**: We see that using the holdout sample, certain X predictors gained/lost significance, indicating potential instability with our modeling.  
+
+
+# Comparing with Model in (c) 
+
+```{r} 
+model.light.end <- lm(Y~X1+X2+X3+X4+X8+X9+X10, data=test.df)
+summary(model.light.end) # Model in (c)
+summary(model.end) # Model in (e) with holdout sample
+
+```
+
+
+When both used the holdout sample, the Full model (all X's included) performed much better than the model in (c).  
+
+Full model adj-R2: 0.67, (c) model adj-R2: 0.39.   
+

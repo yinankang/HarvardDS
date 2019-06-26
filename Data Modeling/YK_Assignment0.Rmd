@@ -1,0 +1,34 @@
+---
+title: "YK_Assignment0"
+author: "Yinan Kang"
+date: "1/29/2019"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+```{r}
+X <- matrix(c(10,1,9,3,8,7,5,2,4), nrow=3, ncol=3, byrow = TRUE)
+
+Y <- matrix(c(2,8,3,5,1,12,13,4,7), nrow=3, ncol=3, byrow = TRUE)
+
+print(X)
+print(Y)
+```
+## Problem 8
+```{r}
+print(X+Y)
+```
+## Problem 9
+```{r}
+print(solve(t(X)*X)*t(X)*Y)
+```
+## Problem 10
+```{r}
+sample <- runif(10000)
+quantile(sample, .99)
+```
+The 99th percentile in this uniform distribution of random variables is `r quantile(sample, .99) ` 

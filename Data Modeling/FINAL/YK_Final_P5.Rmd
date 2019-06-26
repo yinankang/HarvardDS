@@ -1,0 +1,104 @@
+---
+title: "YK_Final_P5"
+author: "Yinan Kang"
+date: "5/14/2019"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+rm(list=ls())
+df <- read.csv("/cloud/project/Question 5.csv")
+
+require(ResourceSelection)
+```
+
+
+# (a) Fit model with first orders plus all interactions
+```{r} 
+model <- glm(Y~X1+X2+X3+X4+X1*X2+X1*X3+X1*X4+X2*X3+X2*X4+X3*X4, family="binomial",data=df)
+summary(model)
+```
+
+
+# (b) Likelihood Ratio Test for dropping Interaction Terms
+
+Full Model: Pi = [1+exp(-X'BetaFull)] ^-1   
+where X*BetaFull = Beta0 + Beta1*X1 + .... Beta10*(X3*X4)   
+
+Reduced Model: Pi = [1+exp(-X'BetaReduced)] ^-1  
+where X*BetaFull = Beta0 + Beta1*X1 + .... Beta4*X4    
+
+
+Hypotheses:  
+H0: Beta 5 = Beta 6 .... = Beta 10 = 0   (All Beta's with Interaction terms = 0)  
+Ha: Not All Betas in H0 = 0   
+
+Decision Rule:  
+If G2 <= Chi-Sq(1-alpha, p-q), conclude H0   
+If G2 > Chi-Sq(1-alpha, p-1), conclude Ha   
+
+Assume alpha = 0.05  
+
+
+```{r}
+model.r <- glm(Y~X1+X2+X3+X4, family = "binomial", data=df)
+anova(model, model.r, test="Chisq")
+```
+
+
+**Decision**:  
+
+We use the 'anova' function to compare our full and reduced models. We see that the p-value associated with the Chi-Sq distribution is > 0.05.   
+This interpretation is different than the formal one stated in the Decision Rule above. This p-value lets us know that there is no statistical significance in adding the interactions, so they can be DROPPED.   
+
+
+## (c) Backward elimination
+```{r}
+step(model, scope = formula(model), direction="backward")
+```
+
+
+**Analysis**: Using Backward step, we see that X1, X2, X3 are retained.   
+
+
+## Re-fitting model for rest of problem  !!
+```{r}
+model <- glm(Y~X1+X2+X3, family="binomial", data=df)
+
+```
+
+## (d) Hoslem-Lameshow Goodness-of-Fit
+
+Hypotheses:  
+
+H0: Logistic response is appropriate  
+Ha: Logistic Response is not appropriate  
+
+Alternatives: 
+
+If X.test <= Chi-Sq(0.95,c-2), conclude H0  
+If X.test > Chi-Sq(0.95,c-2), conclude Ha  
+
+
+```{r}
+hoslem.test(model$y,fitted(model),g=5)
+```
+
+
+**Decision**: As X.test < Chi-Sq, we conclude H0, that a Logistic response is appropriate.   
+
+
+## (e) Prediction
+
+```{r}
+pred.data <- data.frame(X1=c(33,6), X2 =c(1,1), X3 = c(1,1), X4 = c(0,0))
+
+pred <- predict(model, newdata=pred.data)
+print(pred)
+
+# Ran out of time to do joint confidence interval
+```
