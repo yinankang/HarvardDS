@@ -131,21 +131,24 @@ for a single variable and returns the recoded variable. Call this function "yesn
 
 ```{r}
 # YOUR CODE HERE 
-yesno<-function(oldvariable,newvariable){
-   if (any(oldvaraible="Y") == TRUE) {
-   for (i in (1:nrow(oldvariable))){
-    if (oldvariable[i] == "Y"){
-    newvariable[i] = "1"
+yesno<-function(oldvariable,newvariable,col){
+   if (any(oldvariable=="Y") == TRUE) {
+      for (i in (1:length(oldvariable))){
+        
+        if (oldvariable[i] == "Y"){
+        newvariable[i,col+1] = "1"
+        }
+        if (oldvariable[i] == "N"){
+        newvariable[i,col+1] = "0"
+        }
+        if (oldvariable[i] == " "){
+        newvariable[i,col+1] = "NA" 
+        }
+        else {(next())}
+
+      }
     }
-    if (oldvariable[i] == "N"){
-    newvariable[i] = "0"
-    }
-    if (oldvariable[i] == " "){
-    newvariable[i] = "NA" 
-    }
-  }
-  }
-  
+  else{print('nope')}
   return(newvariable)
 }
 
@@ -161,10 +164,16 @@ Save these newly coded variables in a data frame called "recoded" and use the "h
 
 ```{r}
 recoded <- data.frame()
-
+nope=0
 for (j in 1:112){
-    
-    recoded <- yesno(stop.frisk.df[j],recoded[ncol(recoded)+1])
+    if (is.factor(stopandfrisk2016[,j]) == TRUE){
+      recoded <- yesno(stopandfrisk2016[,j],recoded,ncol(recoded))
+      col.name <- colnames(stopandfrisk2016[j])
+      colnames(recoded)[ncol(recoded)] <- col.name
+    }
+    else {
+      nope <- nope + 1
+      print(nope)}
 }
 
 
