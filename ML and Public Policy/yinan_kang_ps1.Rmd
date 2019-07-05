@@ -2,8 +2,6 @@
 title: 'Yinan_Kang_PS1'
 author: "Yinan Kang (yik398@g.harvard.edu)"
 output:
-  html_document: default
-  html_notebook: default
   pdf_document: default
 ---
   
@@ -131,6 +129,7 @@ for a single variable and returns the recoded variable. Call this function "yesn
 
 ```{r}
 # YOUR CODE HERE 
+# Added a 3rd function input, that'll be used for indexing purposes
 yesno<-function(oldvariable,newvariable,col){
    if (any(oldvariable=="Y") == TRUE) {
       for (i in (1:length(oldvariable))){
@@ -148,7 +147,7 @@ yesno<-function(oldvariable,newvariable,col){
 
       }
     }
-  else{print('nope')}
+  # else{print('nope')} was using this to troubleshoot earlier
   return(newvariable)
 }
 
@@ -163,19 +162,39 @@ Using the function that you defined in part (a), write a loop that transforms ev
 Save these newly coded variables in a data frame called "recoded" and use the "head()" function to print out the first few observations of the new dataframe that you created.
 
 ```{r}
+# Initiate empty 'recoded' data frame 
 recoded <- data.frame()
-nope=0
-for (j in 1:112){
+# nope=0 ... was using this for troubleshooting 
+
+# Creating loop that will send in columsn of 'stopandfrisk2016' as inputs, 'recoded' results dataframe as output, and also take in current iteration of
+# number of columns in 'recoded' for indexing purposes 
+for (j in 1:90){
     if (is.factor(stopandfrisk2016[,j]) == TRUE){
       recoded <- yesno(stopandfrisk2016[,j],recoded,ncol(recoded))
       col.name <- colnames(stopandfrisk2016[j])
       colnames(recoded)[ncol(recoded)] <- col.name
     }
-    else {
-      nope <- nope + 1
-      print(nope)}
+    # else { ... ignore, used this part for troubleshoot
+     # nope <- nope + 1
+     # print(nope)} 
 }
 
+# Manually skipped column #91, 'othrfeatr', which was particularly funky and gave the function issues. It wasn't a Y/N column anyway 
+
+for (j in 92:112){
+    if (is.factor(stopandfrisk2016[,j]) == TRUE){
+      recoded <- yesno(stopandfrisk2016[,j],recoded,ncol(recoded))
+      col.name <- colnames(stopandfrisk2016[j])
+      colnames(recoded)[ncol(recoded)] <- col.name
+    }
+    #else {
+     # nope <- nope + 1
+     # print(nope)} ... was using this section to troubleshoot earlier
+}
+
+# Verifying the 'recoded' dataframe conversion worked
+head(recoded,8)
+colnames(recoded)
 
 ```
 
@@ -187,13 +206,16 @@ Interpret the odds ratios for one your independent variables.
 
 
 ```{r}
-# YOUR CODE HERE
+# Building a model and looking at summary
 
+model <- glm(frisked ~ timestop + pistol + race + sex + build, data = stopandfrisk2016, family = "binomial")
+summary(model)
 
-
-
-
+# Looking at odds ratio for 'raceB'
+exp(3.316e-01) 
 ```
+
+**Odds Ratio**: Having race "B" increases odds of 'frisked' by 1.39 
 
 
 
