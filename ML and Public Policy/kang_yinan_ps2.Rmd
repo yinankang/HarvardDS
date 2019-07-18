@@ -1,0 +1,92 @@
+---
+title: 'Harvard Summer School, ISMT S-143: Problem Set 2: Intro to R, Due 7/9/19 by 11:59PM (100 Points)'
+author: "Professor Jason Anastasopoulos (lia650@g.harvard.edu)"
+output:
+  html_document: default
+  html_notebook: default
+  pdf_document: default
+---
+
+For this exercise, you will use the R package *twitteR* to collect data from Twitter and clean the text data.
+
+### INSTRUCTIONS
+
+Problem sets can be submitted as EITHER:
+
+1. A compiled *R Markdown* file (in HTML) with the following format: "lastname_firstname_ps2.html". Ie. for me this would be: "anastasopoulos_jason_ps2.html"
+
+2. An annotated *.R* file with the following format: "lastname_firstname_ps2.R". Ie. for me this would be: "anastasopoulos_jason_ps2.R". 
+
+Please only fill in/complete the sections labelled "YOUR CODE HERE"
+  
+### Elizabeth Warren's Tweets
+
+1. Set up OAuth credentials which you can use to access the Twitter database by establishing an account on the [Twitter Developer Page](https://apps.twitter.com)  (**20 Points**)
+
+-> Done this part, and utilized the given OAuth credentials below. <- 
+	
+2. Use the *twitteR* package to collect the most recent 100 tweets from *@ewarren* along with: (1) how many times the Tweets were retweeted; (2) the number of likes that each Tweet received; (3) the date and time of the Tweet and; (4) the city of the Tweet (if available).  (**40 Points**)
+
+
+```{r}
+# Let's first load the R packages and the data
+library(pacman)
+library(twitteR)
+# This loads and installs the packages you need at once
+pacman::p_load(foreign,twitteR,jsonlite)
+
+
+##### YOUR CODE HERE ###################################
+consumer_key <- "TlukTqgLPqM9KTj2WHgHc7tV4"
+consumer_secret <- "Qm1JZntwDOeXTYS6gyu0NC2oj7ApXeLGRxl2MFhpIXwhECIfE1"
+access_token <- "1075186971205603334-KRAvwljH0devADUYMkQcLt77dULFkb"
+access_secret <- "vs6gomXgwYS8Na0yATa00hmeLLl4URcFDalqpClfgG3do"
+
+setup_twitter_oauth(consumer_key, consumer_secret, access_token, access_secret)
+
+# Storing 100 tweets into 'warren'
+warren = searchTwitter("@ewarren",n=100)[1:100]
+
+# Generating result dataframes 
+rt <- data.frame() # Holding retweet count 
+likes <- data.frame() # Holding number of likes/favorites
+when <- data.frame() # Holding when tweet was tweeted
+long <- data.frame() # Holding longitude of location 
+lat <- data.frame() # Holding latitude of location 
+
+# Looking througha all 100 tweets for each characteristic, and sending the info to the appropriate result dataframe
+for (i in 1:100){
+  rt.i <- warren[[i]]$retweetCount
+  rt[i,1] <- rt.i
+  likes.i <- warren[[i]]$favoriteCount
+  likes[i,1] <- likes.i
+  when.i <- warren[[i]]$created
+  when[i,1] <- when.i
+  # long.i <- warren[[i]]$longitude   Longitude and latitude seemed to be widely unavailable, thus not including them in looping efforts
+  # long[i,1] <- long.i
+  # lat.i <- warren[[i]]$latitude
+  # lat[i,1] <- lat.i
+  
+}
+
+head(rt,3)
+head(likes,3)
+head(when,3)
+
+
+##### YOUR CODE HERE ###################################
+```
+
+
+3. Build a data frame  with this information and write the data frame to a .csv file labeled ``warren-YourLastName.csv.''  (**40 Points**)
+
+
+```{r}
+##### YOUR CODE HERE ###################################
+final <- cbind(rt,likes,when)
+colnames(final) <- c("NumRTs","Likes","When")
+write.table(final,"warren-Kang.csv")
+
+##### YOUR CODE HERE ###################################
+```
+
