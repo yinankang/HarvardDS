@@ -1,0 +1,152 @@
+---
+title: 'Harvard Summer School, ISMT S-143: Problem Set 3: Training my First Machine Learning Algorithm, Due 7/16/19 by 11:59PM (100 Points + 20 Points Extra Credit)'
+author: "Professor Jason Anastasopoulos (lia650@g.harvard.edu)"
+output:
+  html_document: default
+  html_notebook: default
+  pdf_document: default
+---
+
+
+For these exercises we will be using the movie reviews collected by Pang and Lee. The data can be directly loaded into R from here:
+[http://www.ocf.berkeley.edu/~janastas/data/movie-pang02.csv](Movie Reviews). These reviews are classified into positive and negative ratings.
+
+### INSTRUCTIONS
+
+Problem sets can be submitted as EITHER:
+
+1. A compiled *R Markdown* file (in HTML) with the following format: "lastname_firstname_ps3.html". Ie. for me this would be: "anastasopoulos_jason_ps3.html"
+
+2. An annotated *.R* file with the following format: "lastname_firstname_ps3.R". Ie. for me this would be: "anastasopoulos_jason_ps3.R". 
+
+Please only fill in/complete the sections labelled "YOUR CODE HERE"
+  
+### 1. Cleaning text (25 Points)
+
+Write a function that cleans each movie review by doing ONLY the following:
+
+- Tokenizing words.
+- Removing punctuation.
+- Putting words in lower case.
+- Removing stop words.
+
+```{r message = FALSE, warning = FALSE}
+# Let's first load the R packages and the data
+library(pacman)
+
+# This loads and installs the packages you need at once
+# pacman::p_load(tm,SnowballC,foreign,plyr,twitteR,slam,foreign,wordcloud,LiblineaR,e1071,caret,quanteda)
+
+##### YOUR CODE HERE ###################################
+reviews <- read.csv("http://www.ocf.berkeley.edu/~janastas/data/movie-pang02.csv")
+reviews.text <- lapply(reviews$text, function(t) toString(t))
+reviews.text <- unlist(reviews.text)
+ 
+reviews.corpus <- corpus(reviews.text)
+
+text_cleaner<-function(corpus){
+  corpus.tokens <- tokens(corpus,
+                          remove_puct = TRUE)
+  corpus.tokens <- tokens_select(corpus.tokens, pattern=stopwords('en'), selection='remove')
+  corpus.tokens <- tokens_tolower(corpus.tokens)
+  
+  return(corpus.tokens)
+}
+
+reviews.tokens <- text_cleaner(reviews.corpus)
+##### YOUR CODE HERE ###################################
+```
+
+
+### 2. Document-Term Matrices (25 Points)
+Create two document-term matricies using your pre-processed text data. 
+
+Create one document-term matrix which uses only the text frequencies and call that document term matrix "reviewsDTM_F."
+
+Create another document-term matrix which had TF-IDF weights and call that document term matrix "reviewsDT_TFIDF"
+
+```{r}
+##### YOUR CODE HERE ###################################
+
+
+
+
+##### YOUR CODE HERE ###################################
+```
+
+### 3. Train a random forest classifier (25 Points)
+
+Using the document-term matrix "reviewsDTM_F", train a random forest classifier with a 80\%/20\% training/testing split. 
+
+Calculate and report:
+
+- Accuracy.
+- Precision.
+- Recall.
+- F1 Score
+- Confusion matrix.
+
+Save the trained classifier as the object ``trainedRFclassifier.''
+
+```{r}
+##### YOUR CODE HERE ###################################
+
+
+
+
+##### YOUR CODE HERE ###################################
+```
+
+
+### 4. Train a random forest classifier (again) (25 Points)
+
+Repeat question 4 using the "reviewsDT_TFIDF" document-term matrix.
+
+```{r}
+##### YOUR CODE HERE ###################################
+
+
+
+
+##### YOUR CODE HERE ###################################
+```
+
+
+Do your performance statistics improve? 
+
+Using the *F1* statistic as your measure, it is better to use only text frequency weighting or TF-IDF weighting?
+
+
+### 5. Extra Credit (20 Points)
+
+
+Find the top 5 most important features (terms) distinguishing positive from negative movie reviews. Do these distinguishing terms make sense to you? Why or why not?
+
+```{r}
+##### YOUR CODE HERE ###################################
+
+
+
+
+
+
+
+
+
+
+##### YOUR CODE HERE ###################################
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
