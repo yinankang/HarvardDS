@@ -1,0 +1,227 @@
+---
+title: Yinan Kang - Problem Set 3
+author: Yinan Kang
+output:
+  html_document: default
+  html_notebook: default
+  pdf_document: default
+---
+
+
+For these exercises we will be using the movie reviews collected by Pang and Lee. The data can be directly loaded into R from here:
+[http://www.ocf.berkeley.edu/~janastas/data/movie-pang02.csv](Movie Reviews). These reviews are classified into positive and negative ratings.
+
+### INSTRUCTIONS
+
+Problem sets can be submitted as EITHER:
+
+1. A compiled *R Markdown* file (in HTML) with the following format: "lastname_firstname_ps3.html". Ie. for me this would be: "anastasopoulos_jason_ps3.html"
+
+2. An annotated *.R* file with the following format: "lastname_firstname_ps3.R". Ie. for me this would be: "anastasopoulos_jason_ps3.R". 
+
+Please only fill in/complete the sections labelled "YOUR CODE HERE"
+  
+### 1. Cleaning text (25 Points)
+
+Write a function that cleans each movie review by doing ONLY the following:
+
+- Tokenizing words.
+- Removing punctuation.
+- Putting words in lower case.
+- Removing stop words.
+
+```{r}
+# Let's first load the R packages and the data
+library(pacman)
+
+# This loads and installs the packages you need at once
+pacman::p_load(tm,SnowballC,foreign,plyr,twitteR,slam,foreign,wordcloud,LiblineaR,e1071,caret,quanteda)
+
+##### YOUR CODE HERE ###################################
+text_cleaner<-function(corpus){
+ corpus.tokens <- tokens(corpus, 
+                         remove_punct = TRUE,
+                         )
+ corpus.tokens <- tokens_select(corpus.tokens, pattern = stopwords('en'), selection = 'remove')
+ corpus.tokens <- tokens_tolower(corpus.tokens)
+ 
+   
+}
+##### YOUR CODE HERE ###################################
+```
+
+
+### 2. Document-Term Matrices (25 Points)
+Create two document-term matricies using your pre-processed text data. 
+
+Create one document-term matrix which uses only the text frequencies and call that document term matrix "reviewsDTM_F."
+
+Create another document-term matrix which had TF-IDF weights and call that document term matrix "reviewsDT_TFIDF"
+
+```{r}
+##### YOUR CODE HERE ###################################
+# Loading data
+data <- read.csv("http://www.ocf.berkeley.edu/~janastas/data/movie-pang02.csv")
+# Making Corpus
+data.text <- lapply(data$text, function(t) toString(t))
+data.text <- unlist(data.text)
+data.corpus <- corpus(data.text)
+# Tokenizing with above function
+data.tokens <- text_cleaner(data.corpus)
+
+```
+```{r}
+# Making DFMs
+data.dfm <- dfm(data.tokens)
+reviewsDTM_F <- dfm_trim(data.dfm,termfreq_type = "count")
+reviewDT_TFIDF <- dfm_tfidf(data.dfm)
+```
+
+##### YOUR CODE HERE ###################################
+
+
+### 3. Train a random forest classifier (25 Points)
+
+Using the document-term matrix "reviewsDTM_F", train a random forest classifier with a 80\%/20\% training/testing split. 
+
+Calculate and report:
+
+- Accuracy.
+- Precision.
+- Recall.
+- F1 Score
+- Confusion matrix.
+
+Save the trained classifier as the object ``trainedRFclassifier.''
+
+```{r, message=FALSE}
+##### YOUR CODE HERE ###################################
+require(dplyr)
+dfm_mat <- as.matrix(reviewDT_TFIDF)
+pos <- ifelse(data$class == "Pos", 1,0)
+pos_indices <- which(data$class == 1)
+
+##### YOUR CODE HERE ###################################
+```
+```{r}
+train=sample(1:dim(dfm_mat)[1],
+             dim(dfm_mat)[1]*0.8)
+trainX = dfm_mat[train,]
+testX = dfm_mat[-train,]
+trainY = pos[train]
+testY = pos[-train]
+
+traindata <- data.frame(trainY,trainX)
+testdata <- data.frame(factor(testY), testX)
+```
+
+```{r}
+library(ranger)
+library(randomForest)
+
+# Subsetting the training dataframe, because left at it's original size, my computer gave me (what I believe were) RAM-related errors. 
+# Hope that's OK, since it's just an exercise
+traindata$trainY <- as.factor(traindata$trainY)
+traindata.use <- traindata[1:100,1:1000]
+testdata.use <- testdata[,1:1000]
+
+rf_fit<-ranger(trainY~., data=traindata.use, 
+                                 importance='impurity',
+                                 write.forest=TRUE,
+                                 probability=TRUE)
+
+
+# Assess performance
+ # First we need to make predictions
+rf_probs<-predict(rf_fit,data.frame(testdata.use))
+
+rf_class<-ifelse(rf_probs$predictions[,2] > 0.5, 1,0)
+
+# Next we compare the predicted labels to the actual labels and 
+# Get performance stats
+
+library(caret)
+confusionMatrix(factor(testY), factor(rf_class))
+
+```
+
+### 4. Train a random forest classifier (again) (25 Points)
+
+Repeat question 4 using the "reviewsDT_TFIDF" document-term matrix.
+
+```{r}
+##### YOUR CODE HERE ###################################
+dfm_mat.2 <- as.matrix(reviewsDTM_F)
+pos.2 <- ifelse(data$class == "Pos", 1,0)
+pos_indices.2 <- which(data$class == 1)
+
+train.2=sample(1:dim(dfm_mat.2)[1],
+             dim(dfm_mat.2)[1]*0.8)
+trainX.2 = dfm_mat.2[train.2,]
+testX.2 = dfm_mat.2[-train.2,]
+trainY.2 = pos.2[train.2]
+testY.2 = pos.2[-train.2]
+
+traindata.2 <- data.frame(trainY.2,trainX.2)
+testdata.2 <- data.frame(testY.2, testX.2)
+traindata.2$trainY.2 <- as.factor(traindata.2$trainY.2)
+testdata.2$testY.2 <- as.factor(testdata.2$testY.2)
+
+# Same as above, subsetting traindata.2 to avoid error
+traindata.2.use <- traindata.2[,1:1000]
+testdata.2.use <- testdata.2[,1:1000]
+
+rf_fit.2<-ranger(trainY.2~., data=traindata.2.use, 
+                                 importance='impurity',
+                                 write.forest=TRUE,
+                                 probability=TRUE)
+
+colnames(testdata.2.use)[1] <- "trainY.2"
+# Assess performance
+ # First we need to make predictions
+rf_probs.2<-predict(rf_fit.2,data=testdata.2.use)
+
+rf_class.2<-ifelse(rf_probs.2$predictions[,2] > 0.5, 1,0)
+
+# Next we compare the predicted labels to the actual labels and 
+# Get performance stats
+
+library(caret)
+confusionMatrix(factor(testY.2), factor(rf_class.2))
+##### YOUR CODE HERE ###################################
+```
+
+
+Do your performance statistics improve? 
+
+Using the *F1* statistic as your measure, it is better to use only text frequency weighting or TF-IDF weighting?
+
+RESPONSE: Using the F1 statistic, it is better to use only text frequency weighting (0.79 vs. 0.645)
+
+### 5. Extra Credit (20 Points)
+
+
+Find the top 5 most important features (terms) distinguishing positive from negative movie reviews. Do these distinguishing terms make sense to you? Why or why not?
+
+```{r}
+##### YOUR CODE HERE ###################################
+tail(sort(rf_fit$variable.importance),5)
+
+##### YOUR CODE HERE ###################################
+```
+
+The 5 are : Violence, Gives, Story, S, Many. This on face value does not make sense, other than perhaps 'violence' and 'story'. However, these terms are likely part of common phrases, and thus the face value is not necessarily too imformative. 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
